@@ -1,0 +1,100 @@
+body {
+  font-family: "PT Sans", sans-serif !important;
+  color: #6b6b6b;
+  position: relative !important;
+}
+
+input {
+  background: none repeat scroll 0 0 #f8f8f8;
+  border-color: #c6c6c6 #dadada #eaeaea;
+  border-radius: 4px 4px 4px 4px;
+  -moz-box-sizing: border-box;
+  padding-left: 7px;
+  border-style: solid;
+  border-width: 1px;
+  vertical-align: middle;
+  height: 25px;
+  font-size: 14px;
+  line-height: 25px;
+}
+
+#container {
+  padding: 0px;
+  margin: 0px;
+}
+
+#canvas {
+  padding: 0px;
+  margin: 0px;
+  /* background-color: #fafafa; */
+  background: url(./background.png);
+}
+
+#navigation {
+  padding: 0px;
+  /* margin:auto; */
+  /* background: transparent url(background_drak.jpg); */
+  text-align: center;
+  border-style: solid;
+  border-radius: 15px;
+  background: #202040; /* Old browsers */
+
+}
+
+#toolbar {
+  background: #202040; /* Old browsers */
+  
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cecece', endColorstr='#a8a8a8',GradientType=0 ); /* IE6-9 */
+  padding: 8px;
+  margin: 0px;
+  height: 70px !important;
+  border-bottom: 1px solid #515151;
+}
+
+/******************************************************************
+ * Einstellungen der PropertyViews im Editmodus der "Form".
+ ******************************************************************/
+#propertypane {
+  padding: 0px;
+  margin: 0px;
+  width: 150px;
+  background-color: #7d7d7d;
+  border-top: 0px;
+}
+
+/*container of a single property entry*/
+.property_container {
+  padding: 5px;
+  padding-bottom: 15px;
+}
+
+.toolbar_delimiter {
+  margin-left: 40px;
+}
+
+#content {
+  padding: 0px;
+  margin: 0px;
+}
+
+.palette_node_element {
+  border: 1px solid gray;
+  background-color: #65ff8f;
+  padding: 10px;
+  cursor: move;
+  width: 120px;
+  margin: 30px auto 30px auto;
+  text-align: center;
+  align-items: center;
+  border-radius: 15px;
+}
+
+.shadow {
+  -moz-box-shadow: 3px 3px 4px #000;
+  -webkit-box-shadow: 3px 3px 4px #000;
+  box-shadow: 3px 3px 4px #000;
+  /* For IE 8 */
+  -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000')";
+  /* For IE 5.5 - 7 */
+  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
+}

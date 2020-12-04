@@ -1,0 +1,183 @@
+﻿<html
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+>
+  <head>
+    <title></title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="./css/aristo/jquery-ui-1.8.16.custom.css"
+    />
+    <link type="text/css" rel="stylesheet" href="./css/jquery.layout.css" />
+    <link type="text/css" rel="stylesheet" href="./css/application.css" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+      crossorigin="anonymous"
+    />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="./lib/jquery.js"></script>
+    <script src="./lib/jquery-ui.js"></script>
+    <script src="./lib/jquery.browser.js"></script>
+    <script src="./lib/jquery.layout.js"></script>
+
+    <script src="draw2d.js"></script>
+    <script src="LabelConnection.js"></script>
+    <script src="VoltageSource.js"></script>
+    <script src="CurrentSource.js"></script>
+    <script src="CCVS_Gen.js"></script>
+    <script src="CCVS_Vs.js"></script>
+
+    <script src="CCCS_Gen.js"></script>
+    <script src="CCCS_Vs.js"></script>
+
+    <script src="VCCS.js"></script>
+    <script src="VCVS.js"></script>
+
+    <script src="MyInterceptorPolicy.js"></script>
+
+    <script src="./gui/Application.js"></script>
+    <script src="./gui/View.js"></script>
+    <script src="./gui/Toolbar.js"></script>
+    <script src="./gui/HoverConnection.js"></script>
+
+    <script type="text/javascript">
+      var router = new draw2d.layout.connection.CircuitConnectionRouter();
+      router.abortRoutingOnFirstVertexNode = false;
+      var createConnection = function (sourcePort, targetPort) {
+        var c = new draw2d.Connection({
+          outlineColor: "#ffffff",
+          outlineStroke: 1,
+          color: "#000000",
+          router: router,
+          stroke: 1,
+          radius: 2,
+        });
+        if (sourcePort) {
+          c.setSource(sourcePort);
+          c.setTarget(targetPort);
+        }
+        return c;
+      };
+      document.addEventListener("DOMContentLoaded", function () {
+        var app = new example.Application();
+        // app.view.installEditPolicy(
+        //   new draw2d.policy.connection.DragConnectionCreatePolicy({
+        //     createConnection: function () {
+        //       return new HoverConnection();
+        //     },
+        //   })
+        // );
+        app.view.installEditPolicy(
+          new draw2d.policy.canvas.FadeoutDecorationPolicy()
+        );
+
+        app.view.installEditPolicy(
+          new draw2d.policy.connection.ComposedConnectionCreatePolicy([
+            // create a connection via Drag&Drop of ports
+            //
+            new draw2d.policy.connection.DragConnectionCreatePolicy({
+              createConnection: createConnection,
+            }),
+            // or via click and point
+            //
+            new draw2d.policy.connection.OrthogonalConnectionCreatePolicy({
+              createConnection: createConnection,
+            }),
+          ])
+        );
+
+        // Create a Connection and connect he Start and End node
+        //
+
+        app.view.getCommandStack().addEventListener(function (e) {
+          if (e.isPostChangeEvent()) {
+            displayJSON(app.view);
+          }
+        });
+      });
+
+      function displayJSON(canvas) {
+        var writer = new draw2d.io.json.Writer();
+        writer.marshal(canvas, function (json) {
+          $("#json").text(JSON.stringify(json, null, 2));
+        });
+      }
+    </script>
+  </head>
+
+  <body id="container">
+    <div id="content">
+      <nav
+        id="toolbar"
+        class="navbar sticky-top navbar-expand-lg navbar-dark"
+      ></nav>
+
+      <div id="canvas" class="" style="width: 3000px; height: 3000px"></div>
+    </div>
+
+    <div id="navigation" class="">
+      <h3 style="padding: 10%; color: #fafafa">Components</h3>
+      <div
+        data-shape="draw2d.shape.analog.ResistorVertical"
+        class="palette_node_element draw2d_droppable"
+      >
+        Resistor
+      </div>
+      <div
+        data-shape="CurrentSource"
+        class="palette_node_element draw2d_droppable"
+      >
+        Current Src
+      </div>
+      <div
+        data-shape="VoltageSource"
+        class="palette_node_element draw2d_droppable"
+      >
+        Voltage Src
+      </div>
+      <div data-shape="VCCS" class="palette_node_element draw2d_droppable">
+        VCCS
+      </div>
+      <div data-shape="VCVS" class="palette_node_element draw2d_droppable">
+        VCVS
+      </div>
+      <div data-shape="CCCS_Gen" class="palette_node_element draw2d_droppable">
+        CCCS_Gen
+      </div>
+      <div data-shape="CCCS_Vs" class="palette_node_element draw2d_droppable">
+        CCCS_Vs
+      </div>
+      <div data-shape="CCVS_Gen" class="palette_node_element draw2d_droppable">
+        CCVS_Gen
+      </div>
+      <div data-shape="CCVS_Vs" class="palette_node_element draw2d_droppable">
+        CCVS_Vs
+      </div>
+    </div>
+    <pre
+      id="json"
+      style="
+        overflow: auto;
+        position: absolute;
+        top: 100px;
+        right: 10px;
+        width: 350;
+        height: 500;
+        background: white;
+        border: 1px solid gray;
+      "
+    ></pre>
+    <script src="index.js"></script>
+  </body>
+</html>
