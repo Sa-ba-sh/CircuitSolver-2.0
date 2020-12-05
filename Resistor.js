@@ -1,5 +1,5 @@
-Resistor1 = draw2d.SVGFigure.extend({
-  NAME: "Resistor1",
+Resistor = draw2d.SVGFigure.extend({
+  NAME: "Resistor",
 
   init: function () {
     this._super();
