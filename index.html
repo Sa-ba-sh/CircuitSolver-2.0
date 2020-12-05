@@ -34,6 +34,8 @@
     <script src="draw2d.js"></script>
     <script src="LabelConnection.js"></script>
     <script src="VoltageSource.js"></script>
+    <script src="Resistor.js"></script>
+
     <script src="CurrentSource.js"></script>
     <script src="CCVS_Gen.js"></script>
     <script src="CCVS_Vs.js"></script>
@@ -100,6 +102,15 @@
         // Create a Connection and connect he Start and End node
         //
 
+        // display the JSON text in the preview DIV
+        //
+        // var reader = new draw2d.io.json.Reader();
+        // reader.unmarshal(app.view, jsonDocument);
+
+        // display the JSON document in the preview DIV
+        //
+        displayJSON(app.view);
+
         app.view.getCommandStack().addEventListener(function (e) {
           if (e.isPostChangeEvent()) {
             displayJSON(app.view);
@@ -128,10 +139,7 @@
 
     <div id="navigation" class="">
       <h3 style="padding: 10%; color: #fafafa">Components</h3>
-      <div
-        data-shape="draw2d.shape.analog.ResistorVertical"
-        class="palette_node_element draw2d_droppable"
-      >
+      <div data-shape="Resistor" class="palette_node_element draw2d_droppable">
         Resistor
       </div>
       <div
