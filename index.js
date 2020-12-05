@@ -1,7 +1,7 @@
 function getJSON() {
   var circuit = document.getElementById("json").innerHTML;
   circuit = JSON.parse(circuit);
-  console.log(circuit);
+  console.log("JSON_initial: ", circuit);
 
   // functionining the classes for the connection, resistor, current source, voltage source, controlled voltage and controlled current source
   class connection {
@@ -646,14 +646,14 @@ function getJSON() {
     var nodes_list = [];
     var added_list = [];
     var cnt = 1;
-    console.log("connection_list", connection_list);
+    // console.log("connection_list", connection_list);
     connection_list.forEach((conn) => {
       if (nodes_list.length == 0) {
-        console.log(conn.src_node, conn.tar_node);
+        // console.log(conn.src_node, conn.tar_node);
         nodes_list.push([0, [conn.src_node, conn.tar_node]]);
         added_list.push(conn.src_node);
         added_list.push(conn.tar_node);
-        console.log("First if");
+        // console.log("First if");
       } else if (
         added_list.includes(conn.src_node) == false &&
         added_list.includes(conn.tar_node)
@@ -729,7 +729,7 @@ function getJSON() {
   }
   function ret_node_m_or_n(text) {
     var res = ret_src_tar_node_from_conn_label(text);
-    console.log("res:", res);
+    // console.log("res:", res);
     var p1 = return_node_num_from_port_id(res[0]);
     var p2 = return_node_num_from_port_id(res[1]);
     if (p1 == p2) {
@@ -738,7 +738,7 @@ function getJSON() {
   }
 
   resistor_list.forEach((ele) => {
-    console.log(return_node_num_from_port_id(ele.inp_port_id));
+    // console.log(return_node_num_from_port_id(ele.inp_port_id));
     ele.node_k = return_node_num_from_port_id(ele.inp_port_id);
     ele.node_l = return_node_num_from_port_id(ele.out_port_id);
     // console.log(ele.node_k);
@@ -838,7 +838,7 @@ function getJSON() {
   cccs_gen_list.forEach((ele) => {
     console.log(ele.label, ele.node_k, ele.node_l, ele.node_m, ele.node_n);
   });
-  console.log("CCCS");
+  console.log("CCCS_Vs");
   cccs_vs_list.forEach((ele) => {
     console.log(ele.label, ele.node_k, ele.node_l, ele.node_m, ele.node_n);
   });
@@ -846,9 +846,705 @@ function getJSON() {
   ccvs_gen_list.forEach((ele) => {
     console.log(ele.label, ele.node_k, ele.node_l, ele.node_m, ele.node_n);
   });
-  console.log("CCVS");
+  console.log("CCVS_Vs");
   ccvs_vs_list.forEach((ele) => {
     console.log(ele.label, ele.node_k, ele.node_l, ele.node_m, ele.node_n);
   });
-  console.log("JSON: ", circuit);
+  console.log("JSON_final: ", circuit);
+
+  var nodes = nodes_list.length - 1;
+
+  var size = parseInt(nodes + volt_src_list.length + vcvs_list.length);
+  var cond_matrix = Array(size)
+    .fill()
+    .map(() => Array(size).fill(0));
+
+  var curr_matrix = Array(size)
+    .fill()
+    .map(() => Array(1).fill(0));
+
+  var var_matrix = Array(size)
+    .fill()
+    .map(() => Array(1).fill(0));
+
+  var var_list = [];
+  for (var i = 0; i < nodes; i++) {
+    var_list.push("V_" + String(i + 1));
+  }
+
+  var obj_volt_src_cnt = 0;
+  var obj_vccs_cnt = 0; // Variable for selecting the apt column if the element is a vccs
+  var obj_vcvs_cnt = 0;
+  var obj_cccs_gen_cnt = 0;
+  var obj_cccs_vs_cnt = 0;
+  var obj_ccvs_gen_cnt = 0;
+  var obj_ccvs_vs_cnt = 0;
+
+  for (var obj = 0; obj < curr_src_list.length; obj++) {
+    // Contributes only to cuurent matrix
+    var n_k = parseInt(curr_src_list[obj].node_k) - 1;
+    var n_l = parseInt(curr_src_list[obj].node_l) - 1;
+    var current = parseFloat(curr_src_list[obj].label);
+
+    if (n_k != -1 && n_l != -1) {
+      curr_matrix[n_k][0] += current;
+      curr_matrix[n_l][0] -= current;
+    } else if (n_k == -1 && n_l != -1) {
+      curr_matrix[n_l][0] -= current;
+    } else if (n_k != -1 && n_l == -1) {
+      curr_matrix[n_k][0] += current;
+    }
+  }
+  for (var obj = 0; obj < volt_src_list.length; obj++) {
+    //  The following code is only when there is one voltage source in the circuit
+    // Contributes to both current and conductance matrix
+    var n_k = parseInt(volt_src_list[obj].node_k) - 1;
+    var n_l = parseInt(volt_src_list[obj].node_l) - 1;
+
+    var voltage = parseFloat(volt_src_list[obj].label);
+    var count = 0;
+    var new_var = "I_" + String(n_k + 1) + "_" + String(n_l + 1);
+    for (var i = 0; i < var_list.length; i++) {
+      if (var_list[i] == new_var) {
+        count = count + 1;
+      }
+    }
+    if (count == 0) {
+      var_list.push(new_var);
+    }
+    var idx = var_list.indexOf(new_var);
+    if (n_k != -1 && n_l != -1) {
+      cond_matrix[n_k][idx] += 1;
+      cond_matrix[n_l][idx] -= 1;
+      cond_matrix[idx][n_k] += 1;
+      cond_matrix[idx][n_l] -= 1;
+
+      curr_matrix[idx][0] += voltage;
+      obj_volt_src_cnt += 1;
+    } else if (n_k == -1 && n_l != -1) {
+      cond_matrix[n_l][idx] -= 1;
+      cond_matrix[idx][n_l] -= 1;
+
+      curr_matrix[idx][0] += voltage;
+
+      obj_volt_src_cnt += 1;
+    } else if (n_l == -1 && n_k != -1) {
+      cond_matrix[n_k][idx] += 1;
+      cond_matrix[idx][n_k] += 1;
+
+      curr_matrix[idx][0] += voltage;
+
+      obj_volt_src_cnt += 1;
+    }
+  }
+
+  for (var obj = 0; obj < vccs_list.length; obj++) {
+    var n_k = parseInt(vccs_list[obj].node_k) - 1;
+    var n_l = parseInt(vccs_list[obj].node_l) - 1;
+
+    var ctrl_n_m = parseInt(vccs_list[obj].node_m) - 1;
+    var ctrl_n_n = parseInt(vccs_list[obj].node_n) - 1;
+
+    var transconductance = parseFloat(vccs_list[obj].label);
+    if (n_k != -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][ctrl_n_m] += transconductance;
+      cond_matrix[n_k][ctrl_n_n] -= transconductance;
+      cond_matrix[n_l][ctrl_n_m] -= transconductance;
+      cond_matrix[n_l][ctrl_n_n] += transconductance;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_l][ctrl_n_m] -= transconductance;
+      cond_matrix[n_l][ctrl_n_n] += transconductance;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][ctrl_n_m] += transconductance;
+      cond_matrix[n_k][ctrl_n_n] -= transconductance;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][ctrl_n_n] -= transconductance;
+      cond_matrix[n_l][ctrl_n_n] += transconductance;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_k][ctrl_n_m] += transconductance;
+      cond_matrix[n_l][ctrl_n_m] -= transconductance;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_l][ctrl_n_n] += transconductance;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_l][ctrl_n_m] -= transconductance;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][ctrl_n_n] -= transconductance;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_k][ctrl_n_m] += transconductance;
+    }
+  }
+  for (var obj = 0; obj < vcvs_list.length; obj++) {
+    var n_k = parseInt(vcvs_list[obj].node_k) - 1;
+    var n_l = parseInt(vcvs_list[obj].node_l) - 1;
+
+    var ctrl_n_m = parseInt(vcvs_list[obj].node_m) - 1;
+    var ctrl_n_n = parseInt(vcvs_list[obj].node_n) - 1;
+
+    var ctrl_ftr = parseFloat(vcvs_list[obj].label);
+    var new_var = "I_" + String(n_k + 1) + "_" + String(n_l + 1);
+    var count = 0;
+    for (var i = 0; i < var_list.length; i++) {
+      if (var_list[i] == new_var) {
+        count = count + 1;
+      }
+    }
+    if (count == 0) {
+      var_list.push(new_var);
+    }
+
+    var idx = var_list.indexOf(new_var);
+
+    if (n_k != -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[idx][n_k] += 1;
+      cond_matrix[idx][n_l] -= 1;
+      cond_matrix[idx][ctrl_n_m] -= ctrl_ftr;
+      cond_matrix[idx][ctrl_n_n] += ctrl_ftr;
+      cond_matrix[n_k][idx] += 1;
+      cond_matrix[n_l][idx] -= 1;
+
+      obj_vcvs_cnt += 1;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[idx][n_l] -= 1;
+      cond_matrix[idx][ctrl_n_m] -= ctrl_ftr;
+      cond_matrix[idx][ctrl_n_n] += ctrl_ftr;
+      cond_matrix[n_l][idx] -= 1;
+
+      obj_vcvs_cnt += 1;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[idx][n_k] += 1;
+      cond_matrix[idx][ctrl_n_m] -= ctrl_ftr;
+      cond_matrix[idx][ctrl_n_n] += ctrl_ftr;
+      cond_matrix[n_k][idx] += 1;
+
+      obj_vcvs_cnt += 1;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[idx][n_k] += 1;
+      cond_matrix[idx][n_l] -= 1;
+      cond_matrix[idx][ctrl_n_n] += ctrl_ftr;
+      cond_matrix[n_k][idx] += 1;
+      cond_matrix[n_l][idx] -= 1;
+
+      obj_vcvs_cnt += 1;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[idx][n_k] += 1;
+      cond_matrix[idx][n_l] -= 1;
+      cond_matrix[idx][ctrl_n_m] -= ctrl_ftr;
+      cond_matrix[n_k][idx] += 1;
+      cond_matrix[n_l][idx] -= 1;
+
+      obj_vcvs_cnt += 1;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[idx][n_l] -= 1;
+      cond_matrix[idx][ctrl_n_n] += ctrl_ftr;
+      cond_matrix[n_l][idx] -= 1;
+
+      obj_vcvs_cnt += 1;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[idx][n_l] -= 1;
+      cond_matrix[idx][ctrl_n_m] -= ctrl_ftr;
+      cond_matrix[n_l][idx] -= 1;
+
+      obj_vcvs_cnt += 1;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[idx][n_k] += 1;
+      cond_matrix[idx][ctrl_n_n] += ctrl_ftr;
+      cond_matrix[n_k][idx] += 1;
+
+      obj_vcvs_cnt += 1;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[idx][n_k] += 1;
+      cond_matrix[idx][ctrl_n_m] -= ctrl_ftr;
+      cond_matrix[n_k][idx] += 1;
+
+      obj_vcvs_cnt += 1;
+    }
+  }
+
+  for (var obj = 0; obj < cccs_gen_list.length; obj++) {
+    var n_k = parseInt(cccs_gen_list[obj].node_k) - 1;
+    var n_l = parseInt(cccs_gen_list[obj].node_l) - 1;
+    var ctrl_n_m = parseInt(cccs_gen_list[obj].node_m) - 1;
+    var ctrl_n_n = parseInt(cccs_gen_list[obj].node_n) - 1;
+    var ctrl_ftr = parseFloat(cccs_gen_list[obj].label);
+
+    var new_var_V = "V_" + String(ctrl_n_m + 1) + "_";
+
+    var var_list1 = var_list.slice(0, ctrl_n_m + 1);
+    var_list1.push(new_var_V);
+    var_list2 = var_list1.concat(var_list.slice(ctrl_n_m + 1));
+    var_list = var_list2;
+
+    var cond_matrix1 = cond_matrix.slice(0, ctrl_n_m + 1);
+    cond_matrix1.push(Array(size).fill(0));
+    cond_matrix1 = cond_matrix1.concat(cond_matrix.slice(ctrl_n_m + 1));
+    cond_matrix = cond_matrix1;
+
+    var cond_matrix2 = cond_matrix
+      .slice(0)
+      .map((i) => i.slice(0, ctrl_n_m + 1));
+    var cond_matrix_two = cond_matrix2;
+
+    var cond_matrix3 = cond_matrix.slice(0).map((i) => i.slice(ctrl_n_m + 1));
+    for (var j = 0; j < cond_matrix2.length; j++) {
+      cond_matrix2[j][cond_matrix2[j].length] = 0;
+    }
+
+    var cond_matrix4 = [];
+    for (var i = 0; i < cond_matrix2.length; i++) {
+      cond_matrix4[i] = cond_matrix2[i].concat(cond_matrix3[i]);
+    }
+    cond_matrix = cond_matrix4;
+    curr_matrix1 = curr_matrix.slice(0, ctrl_n_m + 1);
+    curr_matrix1.push(Array(1).fill(0));
+    curr_matrix1 = curr_matrix1.concat(curr_matrix.slice(ctrl_n_m + 1));
+    curr_matrix = curr_matrix1;
+
+    var new_var_I = "I_" + String(ctrl_n_m + 1) + "_" + String(ctrl_n_n + 1);
+    var_list.push(new_var_I);
+    cond_matrix.push(Array(cond_matrix[0].length).fill(0));
+    var cond_matrix_check = cond_matrix;
+    var length = cond_matrix.length;
+    for (var k = 0; k < length; k++) {
+      cond_matrix[k] = cond_matrix[k].concat(0);
+    }
+    curr_matrix.push(Array(1).fill(0));
+
+    var i_mn = var_list.indexOf(
+      "I_" + String(ctrl_n_m + 1) + "_" + String(ctrl_n_n + 1)
+    );
+    if (n_k != -1) {
+      n_k = var_list.indexOf("V_" + String(n_k + 1));
+    }
+    if (n_l != -1) {
+      n_l = var_list.indexOf("V_" + String(n_l + 1));
+    }
+    if (ctrl_n_m != -1) {
+      ctrl_n_m = var_list.indexOf("V_" + String(ctrl_n_m + 1));
+      ctrl_n_n = var_list.indexOf("V_" + String(ctrl_n_m + 1));
+    }
+
+    if (n_k != -1 && n_l != -1 && ctrl_n_m != -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1) {
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m == -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m == -1) {
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m == -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+    }
+  }
+  for (var obj = 0; obj < cccs_vs_list.length; obj++) {
+    var n_k = parseInt(cccs_vs_list[obj].node_k) - 1;
+    var n_l = parseInt(cccs_vs_list[obj].node_l) - 1;
+    var ctrl_n_m = parseInt(cccs_vs_list[obj].node_m) - 1;
+    var ctrl_n_n = parseInt(cccs_vs_list[obj].node_n) - 1;
+    var ctrl_ftr = parseFloat(cccs_vs_list[obj].label);
+
+    var i_mn = var_list.indexOf(
+      "I_" + String(ctrl_n_m + 1) + "_" + String(ctrl_n_n + 1)
+    );
+    if (n_k != -1) {
+      n_k = var_list.indexOf("V_" + String(n_k + 1));
+    }
+    if (n_l != -1) {
+      n_l = var_list.indexOf("V_" + String(n_l + 1));
+    }
+    if (ctrl_n_m != -1) {
+      ctrl_n_m = var_list.indexOf("V_" + String(ctrl_n_m + 1));
+    }
+    if (ctrl_n_n != -1) {
+      ctrl_n_n = var_list.indexOf("V_" + String(ctrl_n_m + 1));
+    }
+
+    if (n_k != -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_l][i_mn] -= ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_k][i_mn] += ctrl_ftr;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+    }
+  }
+  for (var obj = 0; obj < ccvs_gen_list.length; obj++) {
+    var n_k = parseInt(ccvs_gen_list[obj].node_k) - 1;
+    var n_l = parseInt(ccvs_gen_list[obj].node_l) - 1;
+    var ctrl_n_m = parseInt(ccvs_gen_list[obj].node_m) - 1;
+    var ctrl_n_n = parseInt(ccvs_gen_list[obj].node_n) - 1;
+    var transresistance = parseFloat(ccvs_gen_list[obj].label);
+
+    var new_var_V = "V_" + String(ctrl_n_m + 1) + "_";
+    var var_list1 = var_list.slice(0, ctrl_n_m + 1);
+    var_list1.push(new_var_V);
+    var_list2 = var_list1.concat(var_list.slice(ctrl_n_m + 1));
+    var_list = var_list2;
+
+    var cond_matrix1 = cond_matrix.slice(0, ctrl_n_m + 1);
+
+    cond_matrix1.push(Array(size).fill(0));
+    cond_matrix1 = cond_matrix1.concat(cond_matrix.slice(ctrl_n_m + 1));
+    cond_matrix = cond_matrix1;
+    var cond_matrix2 = cond_matrix
+      .slice(0)
+      .map((i) => i.slice(0, ctrl_n_m + 1));
+    var cond_matrix3 = cond_matrix.slice(0).map((i) => i.slice(ctrl_n_m + 1));
+    for (var j = 0; j < cond_matrix2.length; j++) {
+      cond_matrix2[j][cond_matrix2[j].length] = 0;
+    }
+
+    var cond_matrix4 = [];
+    for (var i = 0; i < cond_matrix2.length; i++) {
+      cond_matrix4[i] = cond_matrix2[i].concat(cond_matrix3[i]);
+    }
+    cond_matrix = cond_matrix4;
+
+    curr_matrix1 = curr_matrix.slice(0, ctrl_n_m + 1);
+    curr_matrix1.push(Array(1).fill(0));
+    curr_matrix1 = curr_matrix1.concat(curr_matrix.slice(ctrl_n_m + 1));
+    curr_matrix = curr_matrix1;
+
+    var new_var_I = "I_" + String(ctrl_n_m + 1) + "_" + String(ctrl_n_n + 1);
+    var_list.push(new_var_I);
+    cond_matrix.push(Array(cond_matrix[0].length).fill(0));
+    var length = cond_matrix[0].length;
+    for (var j = 0; j < cond_matrix.length; j++) {
+      cond_matrix[j][length] = 0;
+    }
+    curr_matrix.push(Array(1).fill(0));
+
+    var new_var_I = "I_" + String(n_k + 1) + "_" + String(n_l + 1);
+    var_list.push(new_var_I);
+    cond_matrix.push(Array(cond_matrix[0].length).fill(0));
+    length = cond_matrix[0].length;
+    for (var j = 0; j < cond_matrix.length; j++) {
+      cond_matrix[j][length] = 0;
+    }
+    curr_matrix.push(Array(1).fill(0));
+
+    var i_mn = var_list.indexOf(
+      "I_" + String(ctrl_n_m + 1) + "_" + String(ctrl_n_n + 1)
+    );
+    var i_kl = var_list.indexOf("I_" + String(n_k + 1) + "_" + String(n_l + 1));
+    if (n_k != -1) {
+      n_k = var_list.indexOf("V_" + String(n_k + 1));
+    }
+    if (n_l != -1) {
+      n_l = var_list.indexOf("V_" + String(n_l + 1));
+    }
+    if (ctrl_n_m != -1) {
+      ctrl_n_m = var_list.indexOf("V_" + String(ctrl_n_m + 1));
+    }
+    if (ctrl_n_n != -1) {
+      ctrl_n_n = var_list.indexOf("V_" + String(ctrl_n_n + 1));
+    }
+    if (n_k != -1 && n_l != -1 && ctrl_n_m != -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][n_l] -= 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1) {
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m == -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m == -1) {
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m == -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[ctrl_n_m + 1][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m + 1] -= 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    }
+  }
+
+  for (var obj = 0; obj < ccvs_vs_list.length; obj++) {
+    var n_k = parseInt(ccvs_vs_list[obj].node_k) - 1;
+    var n_l = parseInt(ccvs_vs_list[obj].node_l) - 1;
+    var ctrl_n_m = parseInt(ccvs_vs_list[obj].node_m) - 1;
+    var ctrl_n_n = parseInt(ccvs_vs_list[obj].node_n) - 1;
+    var transresistance = parseFloat(ccvs_vs_list[obj].label);
+
+    var new_var_I = "I_" + String(ctrl_n_m + 1) + "_" + String(ctrl_n_n + 1);
+    var_list.push(new_var_I);
+    cond_matrix.push(Array(size).fill(0));
+    for (var j = 0; j < size; j++) {
+      cond_matrix[i][size] = 0;
+    }
+    curr_matrix.push(0);
+
+    var new_var_I = "I_" + String(n_k + 1) + "_" + String(n_k + 1);
+    var_list.push(new_var_I);
+    cond_matrix.push(Array(size).fill(0));
+    for (var j = 0; j < size; j++) {
+      cond_matrix[i][size] = 0;
+    }
+    curr_matrix.push(0);
+
+    var i_mn = var_list.index(
+      "I_" + String(ctrl_n_m + 1) + "_" + String(ctrl_n_n + 1)
+    );
+    var i_kl = var_list.indexOf("I_" + String(n_k + 1) + "_" + String(n_l + 1));
+    if (n_k != -1) {
+      n_k = var_list.indexOf("V_" + String(n_k + 1));
+    }
+    if (n_l != -1) {
+      n_l = var_list.indexOf("V_" + String(n_l + 1));
+    }
+    if (ctrl_n_m != -1) {
+      ctrl_n_m = var_list.indexOf("V_" + String(ctrl_n_m + 1));
+    }
+    if (ctrl_n_n != -1) {
+      ctrl_n_n = var_list.indexOf("V_" + String(ctrl_n_m + 1));
+    }
+
+    if (n_k != -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k != -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_n][i_mn] -= 1;
+      cond_matrix[i_mn][ctrl_n_n] -= 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k == -1 && n_l != -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_l][i_kl] -= 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_kl][n_l] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m == -1 && ctrl_n_n != -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    } else if (n_k != -1 && n_l == -1 && ctrl_n_m != -1 && ctrl_n_n == -1) {
+      cond_matrix[n_k][i_kl] += 1;
+      cond_matrix[ctrl_n_m][i_mn] += 1;
+      cond_matrix[i_mn][ctrl_n_m] += 1;
+      cond_matrix[i_kl][n_k] += 1;
+      cond_matrix[i_kl][i_mn] -= transresistance;
+    }
+  }
+
+  for (var obj = 0; obj < resistor_list.length; obj++) {
+    var n_k = parseInt(resistor_list[obj].node_k);
+    // console.log("n_k: ", n_k);
+
+    var n_l = parseInt(resistor_list[obj].node_l);
+    // console.log("n_l: ", n_l);
+
+    if (ccvs_gen_list.length > 0) {
+      var ccvs_high = parseInt(ccvs_gen_list[0].node_m);
+      // console.log("ccvs_high: ", ccvs_high);
+      var ccvs_low = parseInt(ccvs_gen_list[0].node_n);
+      // console.log("ccvs_low: ", ccvs_low);
+
+      if (n_l == ccvs_high && n_k == ccvs_low) {
+        var temp = n_l;
+        n_l = n_k;
+        n_k = temp;
+        if (n_l <= ccvs_high) {
+          n_l = n_l - 1;
+        }
+      } else if (n_k == ccvs_high && n_l == ccvs_low) {
+        n_k = n_k;
+        if (n_l <= ccvs_high) {
+          n_l = n_l - 1;
+        }
+      } else if (n_l <= ccvs_high && n_k <= ccvs_high) {
+        n_l = n_l - 1;
+        n_k = n_k - 1;
+      } else if (n_k <= ccvs_high && n_l > ccvs_high) {
+        n_k = n_k - 1;
+      } else if (n_l <= ccvs_high && n_k > ccvs_high) {
+        n_l = n_l - 1;
+      }
+    } else if (cccs_gen_list.length > 0) {
+      var cccs_high = parseInt(cccs_gen_list[0].node_m);
+      var cccs_low = parseInt(cccs_gen_list[0].node_n);
+
+      if (n_l == cccs_high && n_k == cccs_low) {
+        var temp = n_l;
+        n_l = n_k;
+        n_k = temp;
+        if (n_l <= ccvs_high) {
+          n_l = n_l - 1;
+        }
+      } else if (n_k == cccs_high && n_l == cccs_low) {
+        n_k = n_k;
+        if (n_l <= cccs_high) {
+          n_l = n_l - 1;
+        }
+      } else if (n_l <= cccs_high && n_k <= cccs_high) {
+        n_l = n_l - 1;
+        n_k = n_k - 1;
+      } else if (n_k <= cccs_high && n_l > cccs_high) {
+        n_k = n_k - 1;
+      } else if (n_l <= cccs_high && n_k > cccs_high) {
+        n_l = n_l - 1;
+      }
+    } else {
+      n_k = n_k - 1;
+      n_l = n_l - 1;
+    }
+    // console.log("n_k_after: ", n_k);
+    // console.log("n_l_after: ", n_l);
+
+    var conductance = 1.0 / parseFloat(resistor_list[obj].label);
+    // console.log("conductance: ", conductance);
+
+    if (n_k != -1 && n_l != -1) {
+      cond_matrix[n_k][n_k] += conductance;
+      cond_matrix[n_k][n_l] -= conductance;
+      cond_matrix[n_l][n_k] -= conductance;
+      cond_matrix[n_l][n_l] += conductance;
+    } else if (n_k == -1 && n_l != -1) {
+      cond_matrix[n_l][n_l] += conductance;
+    } else if (n_l == -1 && n_k != -1) {
+      cond_matrix[n_k][n_k] += conductance;
+    }
+  }
+  console.log("cond_matrix_final: ", cond_matrix);
+  cond_matrix_inv = math.inv(cond_matrix);
+  var output_matrix = math.multiply(cond_matrix_inv, curr_matrix);
+  console.log(output_matrix);
+  for (var i = 0; i < var_list.length; i++) {
+    if (var_list[i][0] == "V") {
+      console.log(var_list[i] + " = " + output_matrix[i][0].toFixed(2) + " V ");
+    }
+
+    if (var_list[i][0] == "I") {
+      console.log(var_list[i] + " = " + output_matrix[i][0].toFixed(2) + " A ");
+    }
+  }
 }
