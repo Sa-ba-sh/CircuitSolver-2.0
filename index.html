@@ -123,6 +123,8 @@
         writer.marshal(canvas, function (json) {
           $("#json").text(JSON.stringify(json, null, 2));
         });
+                document.getElementById("json").style.display = "none";
+
       }
     </script>
   </head>
