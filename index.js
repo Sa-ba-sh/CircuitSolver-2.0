@@ -1,5 +1,134 @@
+var router = new draw2d.layout.connection.CircuitConnectionRouter();
+router.abortRoutingOnFirstVertexNode = false;
+var createConnection = function (sourcePort, targetPort) {
+  var c = new draw2d.Connection({
+    outlineColor: "#ffffff",
+    outlineStroke: 1,
+    color: "#000000",
+    router: router,
+    stroke: 1,
+    radius: 2,
+  });
+  if (sourcePort) {
+    c.setSource(sourcePort);
+    c.setTarget(targetPort);
+  }
+  return c;
+};
+var circuit = [];
+document.addEventListener("DOMContentLoaded", function () {
+  // var canvas = new draw2d.Canvas("gfx_holder");
+
+  app = new example.Application();
+  // app.view.installEditPolicy(
+  //   new draw2d.policy.connection.DragConnectionCreatePolicy({
+  //     createConnection: function () {
+  //       return new HoverConnection();
+  //     },
+  //   })
+  // );
+  // setTimeout(function () {
+  //   updatePreview(app.view);
+  // }, 1);
+  app.view.installEditPolicy(
+    new draw2d.policy.canvas.FadeoutDecorationPolicy()
+  );
+
+  app.view.installEditPolicy(
+    new draw2d.policy.connection.ComposedConnectionCreatePolicy([
+      // create a connection via Drag&Drop of ports
+      //
+      new draw2d.policy.connection.DragConnectionCreatePolicy({
+        createConnection: createConnection,
+      }),
+      // or via click and point
+      //
+      new draw2d.policy.connection.OrthogonalConnectionCreatePolicy({
+        createConnection: createConnection,
+      }),
+    ])
+  );
+
+  // Create a Connection and connect he Start and End node
+  //
+
+  // display the JSON text in the preview DIV
+  //
+  // var reader = new draw2d.io.json.Reader();
+  // reader.unmarshal(app.view, jsonDocument);
+
+  // display the JSON document in the preview DIV
+  //
+  $(".show").on("click", function () {
+    $(".mask").addClass("active");
+  });
+
+  // Function for close the Modal
+
+  function closeModal() {
+    $(".mask").removeClass("active");
+  }
+
+  // Call the closeModal function on the clicks/keyboard
+
+  $(".close").on("click", function () {
+    closeModal();
+  });
+
+  $(document).keyup(function (e) {
+    if (e.keyCode == 27) {
+      closeModal();
+    }
+  });
+
+  displayJSON(app.view);
+
+  app.view.getCommandStack().addEventListener(function (e) {
+    if (e.isPostChangeEvent()) {
+      displayJSON(app.view);
+      updatePreview(app.view);
+    }
+  });
+});
+document.getElementById("json").style.display = "none";
+function displayJSON(canvas) {
+  var writer = new draw2d.io.json.Writer();
+  writer.marshal(canvas, function (json) {
+    $("#json").text(JSON.stringify(json, null, 2));
+  });
+  // Click function for show the Modal
+}
+function updatePreview(canvas) {
+  // convert the canvas into a PNG image source string
+  //
+  var xCoords = [];
+  var yCoords = [];
+  canvas.getFigures().each(function (i, f) {
+    var b = f.getBoundingBox();
+    xCoords.push(b.x, b.x + b.w);
+    yCoords.push(b.y, b.y + b.h);
+  });
+  var minX = Math.min.apply(Math, xCoords) - 40;
+  var minY = Math.min.apply(Math, yCoords) - 40;
+  var width = Math.max.apply(Math, xCoords) - minX + 40;
+  console.log("width:", width);
+  var height = Math.max.apply(Math, yCoords) - minY + 40;
+  console.log("height:", height);
+
+  var writer = new draw2d.io.png.Writer();
+  writer.marshal(
+    canvas,
+    function (png) {
+      $("#preview").attr("src", png);
+    },
+    new draw2d.geo.Rectangle(minX, minY, width, height)
+  );
+}
+
+// document.getElementById("json").style.display = "none";
+
 function getJSON() {
-  var circuit = document.getElementById("json").innerHTML;
+  circuit = document.getElementById("json").innerHTML;
   circuit = JSON.parse(circuit);
   console.log("JSON_initial: ", circuit);
 
@@ -851,7 +980,9 @@ function getJSON() {
     console.log(ele.label, ele.node_k, ele.node_l, ele.node_m, ele.node_n);
   });
   console.log("JSON_final: ", circuit);
-
+  // var reader = new draw2d.io.json.Reader();
+  // reader.unmarshal(app.view, circuit);
+  console.log(app.view);
   var nodes = nodes_list.length - 1;
 
   var size = parseInt(nodes + volt_src_list.length + vcvs_list.length);
@@ -1538,13 +1669,51 @@ function getJSON() {
   cond_matrix_inv = math.inv(cond_matrix);
   var output_matrix = math.multiply(cond_matrix_inv, curr_matrix);
   console.log(output_matrix);
+  var output = document.getElementById("output");
+  output.innerHTML = "";
+  var h2 = document.createElement("h2");
+  h2.setAttribute("style", "padding-bottom: 30px");
+  h2.innerHTML = "Output: ";
+  output.appendChild(h2);
   for (var i = 0; i < var_list.length; i++) {
     if (var_list[i][0] == "V") {
       console.log(var_list[i] + " = " + output_matrix[i][0].toFixed(2) + " V ");
+      var h3 = document.createElement("h3");
+      h3.innerHTML =
+        var_list[i] + " = " + output_matrix[i][0].toFixed(2) + " V ";
+      output.appendChild(h3);
     }
 
     if (var_list[i][0] == "I") {
       console.log(var_list[i] + " = " + output_matrix[i][0].toFixed(2) + " A ");
+      var h3 = document.createElement("h3");
+      h3.innerHTML =
+        var_list[i] + " = " + output_matrix[i][0].toFixed(2) + " A ";
+      output.appendChild(h3);
     }
   }
+
+  var button = document.createElement("button");
+  button.setAttribute("class", "btn btn-primary btn-lg my-3");
+  button.setAttribute("style", "width: 220px");
+  button.setAttribute("onclick", "window.location.reload();");
+  button.innerHTML = "Simulate Another";
+  output.appendChild(button);
+  var button1 = document.createElement("button");
+  button1.setAttribute("class", "btn btn-primary btn-lg again my-3");
+  button1.setAttribute("style", "width: 220px");
+  button1.innerHTML = "Edit";
+  output.appendChild(button1);
+  $(".again").on("click", function () {
+    console.log("again");
+    closeModal();
+  });
+  var img = document.getElementById("preview");
+  var button2 = document.createElement("a");
+  button2.setAttribute("class", "btn btn-primary btn-lg again my-3");
+  button2.setAttribute("style", "width: 220px");
+  button2.setAttribute("href", img.src);
+  button2.setAttribute("download", "diagram");
+  button2.innerHTML = "Save image as PNG";
+  output.appendChild(button2);
 }

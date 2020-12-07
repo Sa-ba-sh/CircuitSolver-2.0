@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resistive Circuit Solver</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/7.3.0/math.min.js"></script>
+    <!-- CSS only -->
+    <link rel="stylesheet" href="./css/feedback.css" />
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@700&display=swap" rel="stylesheet">
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+  />
+    <link rel="icon" href="css/icons/microchip.png" type="image/icon type">
+
+
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <a class="navbar-brand" href="index.html"><h3>Resistive circuit solver</h3></a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a
+            class="nav-link"
+            type="button"
+            data-toggle="modal"
+            data-target="#staticBackdrop"
+            >Docs</a
+          >          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html">Contact</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="feedback.html">Feedback</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="desc text-center" style="padding-top: 1%">
+      <h1 style="color:#65ff8f " class="animate__animated animate__zoomInDown">Developers<br></h1>
+      <div class="row">
+        <div class="col-md-6">
+          <img src="css/profile/dhinesh.jpeg" class="img-fluid profile rounded-circle" alt="dhinesh">
+                    <h1 style="color: white">Bala Dhinesh</h1>
+                    <a href="https://github.com/BalaDhinesh">
+                    <img class="logo" src="css/icons/github.png" alt="github">
+                    </a>
+                    <a href="https://www.linkedin.com/in/bala-dhinesh/">
+                    <img class="logo" src="css/icons/linkedin.png" alt="linkedin">
+                    </a>
+                    <a href="mailto:m.baladhinesh@gmail.com">
+                    <img class="logo" src="css/icons/gmail.png" alt="gmail">
+                    </a>
+
+
+        </div>
+        <div class="col-md-6">
+          <img src="css/profile/sharanesh.jpeg" class="img-fluid profile rounded-circle" alt="sharanesh">
+                    <h1 style="color: white">Sharanesh</h1>
+                    <a href="https://github.com/rsharanesh2002">
+                    <img class="logo" src="css/icons/github.png" alt="github">
+                    </a>
+                    <a href="https://www.linkedin.com/in/sharanesh-rajendran-42b50018b/">
+                    <img class="logo" src="css/icons/linkedin.png" alt="linkedin">
+                    </a>
+                    <a href="mailto:rsharanesh@gmail.com">
+                    <img class="logo" src="css/icons/gmail.png" alt="gmail">
+                    </a>
+        </div>
+<h5 class="about">We are currently pursuing our Electrical Engineering sophomore at IIT
+        Madras. We started working on this project to enance our skills set in
+        the domain of programming and web development.<br />
+        We are also working on various other projects in the domain of
+        Artificial Intelligence, Embedded systems and Web development, if you
+        wish to collabrate with us on any of the project feel free to drop us a
+        mail or ping us on linkedin.</h5>
+        </div>
+      </div>
+  
+
+ <!-- Modal -->
+ <div
+ class="modal fade docs-popup"
+ id="staticBackdrop"
+ data-backdrop="static"
+ data-keyboard="false"
+ tabindex="-1"
+ aria-labelledby="staticBackdropLabel"
+ aria-hidden="true"
+>
+ <div class="modal-dialog">
+   <div class="modal-content">
+     <div class="modal-header">
+       <h5 class="modal-title" id="staticBackdropLabel">Instructions</h5>
+       <button
+         type="button"
+         class="close"
+         data-dismiss="modal"
+         aria-label="Close"
+       >
+         <span aria-hidden="true">&times;</span>
+       </button>
+     </div>
+     <div class="modal-body">
+       <ol>
+         1. Please make the number of nodes on your own and, enter the
+         number of nodes excluding the reference node. (External Tip: Make
+         the node that has more number of elements connected to it as the
+         reference node)
+       </ol>
+       <ol>
+         2. Also count all the elements in the given circuit and enter it.
+       </ol>
+       <ol>
+         3. Now choose the elements that are present in the circuit from
+         the dropdown menu.
+       </ol>
+       <ol>
+         4. Once this is done, start entering the requested values for each
+         element abiding to the passive sign convention, a picture as a
+         helping hand is shown for each of the element. Don't make any
+         mistake in this, then the resuls might not be define or it can be
+         wrong.
+       </ol>
+       <ol>
+         5. After ensuring all the entered values are correct, hit the
+         submit button and you are done the answer now pops up.
+       </ol>
+     </div>
+     <div class="modal-footer">
+       <button
+         type="button"
+         class="btn btn-secondary"
+         data-dismiss="modal"
+       >
+         Close
+       </button>
+     </div>
+   </div>
+ </div>
+</div>
+
+      
+    </div>
+
+  </body>
+</html>

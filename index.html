@@ -1,193 +1,130 @@
-﻿<html
-  xmlns:v="urn:schemas-microsoft-com:vml"
-  xmlns:o="urn:schemas-microsoft-com:office:office"
->
+﻿<!DOCTYPE html>
+<html lang="en">
   <head>
-    <title></title>
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="viewport" content="width=device-width, minimum-scale=1.0" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resistive Circuit Solver</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/7.3.0/math.min.js"></script>
+    <!-- CSS only -->
+    <link rel="stylesheet" href="./css/feedback.css" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link
-      type="text/css"
+      href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@700&display=swap"
       rel="stylesheet"
-      href="./css/aristo/jquery-ui-1.8.16.custom.css"
     />
-    <link type="text/css" rel="stylesheet" href="./css/jquery.layout.css" />
-    <link type="text/css" rel="stylesheet" href="./css/application.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <link rel="icon" href="css/icons/microchip.png" type="image/icon type" />
+
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
       crossorigin="anonymous"
     />
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@700&display=swap"
-      rel="stylesheet"
-    />
-    <script src="./lib/jquery.js"></script>
-    <script src="./lib/jquery-ui.js"></script>
-    <script src="./lib/jquery.browser.js"></script>
-    <script src="./lib/jquery.layout.js"></script>
-
-    <script src="draw2d.js"></script>
-    <script src="LabelConnection.js"></script>
-    <script src="VoltageSource.js"></script>
-    <script src="Resistor.js"></script>
-
-    <script src="CurrentSource.js"></script>
-    <script src="CCVS_Gen.js"></script>
-    <script src="CCVS_Vs.js"></script>
-
-    <script src="CCCS_Gen.js"></script>
-    <script src="CCCS_Vs.js"></script>
-
-    <script src="VCCS.js"></script>
-    <script src="VCVS.js"></script>
-
-    <script src="MyInterceptorPolicy.js"></script>
-
-    <script src="./gui/Application.js"></script>
-    <script src="./gui/View.js"></script>
-    <script src="./gui/Toolbar.js"></script>
-    <script src="./gui/HoverConnection.js"></script>
-
-    <script type="text/javascript">
-      var router = new draw2d.layout.connection.CircuitConnectionRouter();
-      router.abortRoutingOnFirstVertexNode = false;
-      var createConnection = function (sourcePort, targetPort) {
-        var c = new draw2d.Connection({
-          outlineColor: "#ffffff",
-          outlineStroke: 1,
-          color: "#000000",
-          router: router,
-          stroke: 1,
-          radius: 2,
-        });
-        if (sourcePort) {
-          c.setSource(sourcePort);
-          c.setTarget(targetPort);
-        }
-        return c;
-      };
-      document.addEventListener("DOMContentLoaded", function () {
-        var app = new example.Application();
-        // app.view.installEditPolicy(
-        //   new draw2d.policy.connection.DragConnectionCreatePolicy({
-        //     createConnection: function () {
-        //       return new HoverConnection();
-        //     },
-        //   })
-        // );
-        app.view.installEditPolicy(
-          new draw2d.policy.canvas.FadeoutDecorationPolicy()
-        );
-
-        app.view.installEditPolicy(
-          new draw2d.policy.connection.ComposedConnectionCreatePolicy([
-            // create a connection via Drag&Drop of ports
-            //
-            new draw2d.policy.connection.DragConnectionCreatePolicy({
-              createConnection: createConnection,
-            }),
-            // or via click and point
-            //
-            new draw2d.policy.connection.OrthogonalConnectionCreatePolicy({
-              createConnection: createConnection,
-            }),
-          ])
-        );
-
-        // Create a Connection and connect he Start and End node
-        //
-
-        // display the JSON text in the preview DIV
-        //
-        // var reader = new draw2d.io.json.Reader();
-        // reader.unmarshal(app.view, jsonDocument);
-
-        // display the JSON document in the preview DIV
-        //
-        displayJSON(app.view);
-
-        app.view.getCommandStack().addEventListener(function (e) {
-          if (e.isPostChangeEvent()) {
-            displayJSON(app.view);
-          }
-        });
-      });
-
-      function displayJSON(canvas) {
-        var writer = new draw2d.io.json.Writer();
-        writer.marshal(canvas, function (json) {
-          $("#json").text(JSON.stringify(json, null, 2));
-        });
-                document.getElementById("json").style.display = "none";
-
-      }
-    </script>
   </head>
 
-  <body id="container">
-    <div id="content">
-      <nav
-        id="toolbar"
-        class="navbar sticky-top navbar-expand-lg navbar-dark"
-      ></nav>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <a class="navbar-brand" href="index.html"
+        ><h3>Resistive circuit solver</h3></a
+      >
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-      <div id="canvas" class="" style="width: 3000px; height: 3000px"></div>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              type="button"
+              data-toggle="modal"
+              data-target="#staticBackdrop"
+              >Docs</a
+            >
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html">Contact</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="feedback.html">Feedback</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="desc text-center" style="padding-top: 4%">
+      <h1 style="color: #65ff8f" class="animate__animated animate__zoomInDown">
+        Short your Time<img src="css/icons/icons8-happy-64.png" /><br />
+        We open your answer
+      </h1>
+      <h4
+        class="lead animate__animated animate__fadeInLeft"
+        style="padding-top: 5%"
+      >
+        Fed up of solving complex circuits with tons of bridges and pillars or
+        too lazy even to solve a simple circuit. Fret Not! Check out our super
+        cool circuit solver that could solve any kind of resistive circuit.
+        Excited to check it out!!!
+      </h4>
+      <p>
+        <a
+          class="btn btn-green btn-lg animate__animated animate__fadeInRightBig"
+          style="margin-top: 5%"
+          href="start.html"
+          role="button"
+          >Get Started</a
+        >
+      </p>
+      <div>
+        <a
+          class="animate__animated animate__fadeInLeft"
+          data-toggle="collapse"
+          href="#collapseExample"
+          role="button"
+          aria-expanded="false"
+          aria-controls="collapseExample"
+        >
+          What can i do?
+        </a>
+        <div class="collapse" id="collapseExample">
+          <div class="card card-body">
+            Hi, thanks a lot for waking me up, it is my pleasure to help you in
+            solving a circuit for you. I can help you in solving any kind of
+            resistive circuit, there's no restriction on thr elements that it
+            must contain. But please make sure that you are entering the input
+            in the correct fashion. Basically i am a fool but can do a lot that
+            you find difficult to do. Peace, it now the time to check out me!!!
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div id="navigation" class="">
-      <h3 style="padding: 10%; color: #fafafa">Components</h3>
-      <div data-shape="Resistor" class="palette_node_element draw2d_droppable">
-        Resistor
-      </div>
-      <div
-        data-shape="CurrentSource"
-        class="palette_node_element draw2d_droppable"
-      >
-        Current Src
-      </div>
-      <div
-        data-shape="VoltageSource"
-        class="palette_node_element draw2d_droppable"
-      >
-        Voltage Src
-      </div>
-      <div data-shape="VCCS" class="palette_node_element draw2d_droppable">
-        VCCS
-      </div>
-      <div data-shape="VCVS" class="palette_node_element draw2d_droppable">
-        VCVS
-      </div>
-      <div data-shape="CCCS_Gen" class="palette_node_element draw2d_droppable">
-        CCCS_Gen
-      </div>
-      <div data-shape="CCCS_Vs" class="palette_node_element draw2d_droppable">
-        CCCS_Vs
-      </div>
-      <div data-shape="CCVS_Gen" class="palette_node_element draw2d_droppable">
-        CCVS_Gen
-      </div>
-      <div data-shape="CCVS_Vs" class="palette_node_element draw2d_droppable">
-        CCVS_Vs
-      </div>
-    </div>
-    <pre
-      id="json"
-      style="
-        overflow: auto;
-        position: absolute;
-        top: 100px;
-        right: 10px;
-        width: 350;
-        height: 500;
-        background: white;
-        border: 1px solid gray;
-      "
-    ></pre>
-    <script src="index.js"></script>
+    <!-- JS, Popper.js, and jQuery -->
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+      integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+      integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>

@@ -16,11 +16,10 @@ example.Toolbar = Class.extend({
 
     // Inject the UNDO Button and the callbacks
     //
-    this.headingButton = $(
-      "<a href='#' class='navbar-brand nav-link nav-item' style='color: #fafafa;'><h3>Resistive Circuit solver</h3></a>"
+
+    this.undoButton = $(
+      "<button class='btn btn-light'><img src='./css/icons/undo.png' alt='undo' /> Undo</button>"
     );
-    this.html.append(this.headingButton);
-    this.undoButton = $("<button class='btn btn-light'>Undo</button>");
     this.html.append(this.undoButton);
     this.undoButton
       .button()
@@ -33,7 +32,9 @@ example.Toolbar = Class.extend({
 
     // Inject the REDO Button and the callback
     //
-    this.redoButton = $("<button class='btn btn-light'>Redo</button>");
+    this.redoButton = $(
+      "<button class='btn btn-light'><img src='./css/icons/redo.png' alt='redo' /> Redo</button>"
+    );
     this.html.append(this.redoButton);
     this.redoButton
       .button()
@@ -49,7 +50,9 @@ example.Toolbar = Class.extend({
 
     // Inject the DELETE Button
     //
-    this.deleteButton = $("<button class='btn btn-light'>Delete</button>");
+    this.deleteButton = $(
+      "<button class='btn btn-light'><img src='./css/icons/delete.png' alt='delete' /> Delete</button>"
+    );
     this.html.append(this.deleteButton);
     this.deleteButton
       .button()
@@ -61,13 +64,10 @@ example.Toolbar = Class.extend({
         }, this)
       )
       .button("option", "disabled", true);
-    this.submitButton = $("<button class='btn btn-primary btn-lg px-5' onClick='getJSON()' style='margin-left: 20%'>Submit</button>");
-    this.html.append(this.submitButton);
-    this.div = $(
-      "<a type='button' class='btn btn-outline-success mx-2 ' href='docs.html' style='color:#65ff8f; margin-left:250px !important; '>Docs</a><a href='contact.html' class='btn btn-outline-success  mx-2' href='docs.html' style='color:#65ff8f'>Contact</a><a  href='feedback.html' class='btn btn-outline-success mx-2 mr-auto' href='docs.html' style='color:#65ff8f' >Feedback</a>"
+    this.submitButton = $(
+      "<button type='button' class='show btn-primary btn-lg px-5'  aria-haspopup='true' onClick='getJSON()' ><img src='./css/icons/play.png' alt='play' /> Simulate</button>"
     );
-
-    this.html.append(this.div);
+    this.html.append(this.submitButton);
   },
 
   /**
