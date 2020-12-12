@@ -45,7 +45,6 @@
   background: #ddd;
   border: 1px solid #bbb;
   border-width: 0;
-  left: 160px !important;
 }
 .ui-layout-resizer-drag {
   /* REAL resizer while resize in progress */
