@@ -8623,10 +8623,9 @@ _packages2.default.Connection = _packages2.default.shape.basic.PolyLine.extend(
 	this._super(attr);
 
 	this.label = new draw2d.shape.basic.Label({
-		text: "",
-		stroke: 1,
-		color: "#FF0000",
-		fontColor: "#0d0d0d",
+		text: "Node no",
+		color: "#0d0d0d",
+      fontColor: "#0d0d0d",
 	  });
 
     // add the new decoration to the connection with a position locator.

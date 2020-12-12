@@ -18,8 +18,8 @@ var createConnection = function (sourcePort, targetPort) {
 var circuit = [];
 document.addEventListener("DOMContentLoaded", function () {
   // var canvas = new draw2d.Canvas("gfx_holder");
-
   app = new example.Application();
+  console.log("before: ", app.view);
   // app.view.installEditPolicy(
   //   new draw2d.policy.connection.DragConnectionCreatePolicy({
   //     createConnection: function () {
@@ -48,17 +48,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }),
     ])
   );
-
-  // Create a Connection and connect he Start and End node
-  //
-
-  // display the JSON text in the preview DIV
-  //
-  // var reader = new draw2d.io.json.Reader();
-  // reader.unmarshal(app.view, jsonDocument);
-
-  // display the JSON document in the preview DIV
-  //
   $(".show").on("click", function () {
     $(".mask").addClass("active");
   });
@@ -80,6 +69,16 @@ document.addEventListener("DOMContentLoaded", function () {
       closeModal();
     }
   });
+  // Create a Connection and connect he Start and End node
+  //
+
+  // display the JSON text in the preview DIV
+  //
+  // var reader = new draw2d.io.json.Reader();
+  // reader.unmarshal(app.view, jsonDocument);
+
+  // display the JSON document in the preview DIV
+  //
 
   displayJSON(app.view);
 
@@ -90,7 +89,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
-document.getElementById("json").style.display = "none";
+// document.getElementById("json").style.display = "none";
+
 function displayJSON(canvas) {
   var writer = new draw2d.io.json.Writer();
   writer.marshal(canvas, function (json) {
@@ -930,14 +930,14 @@ function getJSON() {
         connection_list[i].src_node
       );
     }
-    circuit.forEach((ele) => {
-      if (ele["type"] == "draw2d.Connection") {
-        connection_list.forEach((conn) => {
-          if (conn.conn_id == ele["id"]) {
-            ele["labels"][0]["text"] = conn.label_text;
-          }
-        });
-      }
+    app.view.lines.data.forEach((ele) => {
+      console.log("ele: ", ele);
+      connection_list.forEach((conn) => {
+        if (conn.conn_id == ele["id"]) {
+          console.log("Comes");
+          ele.label.setText(conn.label_text);
+        }
+      });
     });
   }
   update_conn_label();
@@ -980,9 +980,11 @@ function getJSON() {
     console.log(ele.label, ele.node_k, ele.node_l, ele.node_m, ele.node_n);
   });
   console.log("JSON_final: ", circuit);
-  // var reader = new draw2d.io.json.Reader();
-  // reader.unmarshal(app.view, circuit);
-  console.log(app.view);
+
+  updatePreview(app.view);
+  console.log("app.view_after: ", app.view);
+  displayJSON(app.view);
+
   var nodes = nodes_list.length - 1;
 
   var size = parseInt(nodes + volt_src_list.length + vcvs_list.length);
@@ -1628,7 +1630,7 @@ function getJSON() {
         var temp = n_l;
         n_l = n_k;
         n_k = temp;
-        if (n_l <= ccvs_high) {
+        if (n_l <= cccs_high) {
           n_l = n_l - 1;
         }
       } else if (n_k == cccs_high && n_l == cccs_low) {
