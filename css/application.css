@@ -38,7 +38,6 @@ input {
   border-style: solid;
   border-radius: 15px;
   background: #f4eeed; /* Old browsers */
-  width: 160px !important;
 }
 
 #toolbar {
